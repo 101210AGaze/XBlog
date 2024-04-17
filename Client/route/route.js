@@ -20,6 +20,10 @@ const routes =[
         component:()=>import('../src/component/markdown/markdown.vue')
     },
 
+    {
+        path:'/user',
+        component:()=>import('../src/component/user/userInfo.vue')
+    },
 
 
 ]

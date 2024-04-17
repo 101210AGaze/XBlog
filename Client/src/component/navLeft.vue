@@ -8,7 +8,7 @@
     <router-link to="/">
     <a href="#" class="blog-menu">Work</a>
     </router-link>
-    <router-link to="/test">
+    <router-link to="/user">
     <a href="#" class="blog-menu">Write</a>
     </router-link>
     <a href="#" class="blog-menu">Blog</a>
