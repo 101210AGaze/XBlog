@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "await": "^0.2.6",
+    "express-json": "^1.0.0",
+    "jsonwebtoken": "^9.0.2"
+  }
+}

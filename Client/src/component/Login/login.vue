@@ -1,7 +1,7 @@
 <script setup>
 import {onMounted} from "vue";
 import NavLeft from "@/component/navLeft.vue";
-import debounce from "../../../Debounce/debounce.js";
+import {register,login} from "../../../Apis/Login/loginApi.js";
 import throttle from "../../../Debounce/throttle.js";
 
 function sayHi(){
