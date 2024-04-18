@@ -6,8 +6,6 @@ const base_url = "http://127.0.0.1:3007"
 export function ajax(method,url,data){
     //初始化一个XMLHttpRequest对象
     const xhr = new XMLHttpRequest();
-    
-
     return new Promise((resolve,reject)=>{
         xhr.onreadystatechange = function (){
             if(xhr.readyState===4){
@@ -24,9 +22,12 @@ export function ajax(method,url,data){
        }
        else if(method==="POST"){
            xhr.open("POST",base_url+url,true)
-             // 设置请求头Content-Type
+             // 设置请求头Content-Type,设置为传输json
             xhr.setRequestHeader('Content-Type', 'application/json');
             // 将数据作为请求正文发送
+           if(localStorage.getItem('token')) {
+               xhr.setRequestHeader("Authorization", "Bearer " + localStorage.getItem('token'))
+           }
             xhr.send(JSON.stringify(data));
        }
      

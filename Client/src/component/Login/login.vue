@@ -38,21 +38,27 @@ onMounted(()=>{
   //为提交按钮绑定请求接口，并添加节流函数
 
   let SignUpFormButton = document.getElementById("SignUpFormButton")
- 
+  let loginFormButton = document.getElementById('loginFormButton')
 
 
   //测试部分当不得真
+
+
    const fullName = ref(document.getElementById('SignUpName'));
    const email = ref(document.getElementById('SignUpEmail'));
    const password = ref(document.getElementById('SignUpPassword'));
+
+   const loginEmail = ref(document.getElementById('loginEmail'))
+   const loginPW = ref(document.getElementById('loginPW'))
   function testInput(){
    console.log("输入获取测试",fullName.value.value,email.value.value,password.value.value)
   }
   SignUpFormButton.addEventListener('click',function (){
     register("/api/register",fullName.value.value,email.value.value,password.value.value)
   },true)
-  SignUpFormButton.addEventListener('click',testInput,true)
-
+  loginFormButton.addEventListener('click',function (){
+    login("/api/login",loginEmail.value.value,loginPW.value.value)
+  },true)
 })
 
 
@@ -83,15 +89,15 @@ onMounted(()=>{
           <form class="forms_form">
             <fieldset class="forms_fieldset">
               <div class="forms_field">
-                <input type="email" placeholder="Email" class="forms_field-input" required autofocus />
+                <input id="loginEmail" type="email" placeholder="Email" class="forms_field-input" required autofocus />
               </div>
               <div class="forms_field">
-                <input type="password" placeholder="Password" class="forms_field-input" required />
+                <input id="loginPW" type="password" placeholder="Password" class="forms_field-input" required />
               </div>
             </fieldset>
             <div class="forms_buttons">
               <button type="button" class="forms_buttons-forgot">Forgot password?</button>
-              <input type="submit" value="Log In" class="forms_buttons-action">
+              <input id="loginFormButton" type="submit" value="Log In" class="forms_buttons-action">
             </div>
           </form>
         </div>

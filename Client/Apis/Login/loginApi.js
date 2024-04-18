@@ -4,12 +4,16 @@ import ajax from "../../Ajax/ajax.js";
 export function login(url, Email, passWord){
     const data = {
         Email:Email,
-        passWord:passWord,
+        password:passWord,
     }
     return new Promise((resolve,reject)=>{
-        resolve(()=>{
-            ajax("POST",url,data).then()
-        })
+        ajax("POST",url,data).then(response=>{
+            console.log("response",response)
+            resolve(response)
+        }) .catch(err => {
+            console.error('登录失败:', err); // 打印注册失败的错误信息
+            reject(err); // 注册失败，将错误信息传递给 reject
+        });
     })
 }
 
@@ -20,8 +24,8 @@ export function login(url, Email, passWord){
 //注册接口
 export function register(url, fullName, passWord, Email) {
     const data = {
-        FullName: fullName,
-        passWord: passWord,
+        username: fullName,
+        password: passWord,
         Email: Email
     };
 

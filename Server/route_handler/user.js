@@ -3,39 +3,39 @@
  
 //设置服务器密钥
 
-// const jwtScretKey = "xinlin101210_want_offer"
+const jwtScretKey = "xinlin101210_want_offer"
 
 
 
 
-// //token检测中间件，检测是否登录
+//token检测中间件，检测是否登录
 
-// exports.isLogin = async function isLogin(req,res,next){
-//        //获取请求的令牌
-//        const tokenHeaderKey = 'Authorization';
-//        const token = req.header(tokenHeaderKey)
+exports.isLogin = async function isLogin(req,res,next){
+       //获取请求的令牌
+       const tokenHeaderKey = 'Authorization';
+       const token = req.header(tokenHeaderKey)
        
-//        if(!token){
-//          res.status(401).json({error: "用户未登录"})
-//        }
+       if(!token){
+         res.status(401).json({error: "用户未登录"})
+       }
 
-//        const verified = jwt.verify(token,jwtScretKey)
+       const verified = jwt.verify(token,jwtScretKey)
 
-//        if(verified){
-//          next()
-//        }else{
-//          return res.status(401).json({error:"无效的token"})
-//        }
-// }         
+       if(verified){
+         next()
+       }else{
+         return res.status(401).json({error:"无效的token"})
+       }
+}         
 
  
  
 exports.register = async (req, res) => {
    try {
        const { username, password, Email, registerDate } = req.body;
-       console.log(username, password, Email, registerDate)
-       const SuSql = "INSERT INTO user (UserName, Email, PassWord, RegisterData) VALUES (?, ?, ?, ?)";
-       const user = await xblog_db.query(SuSql, [username, Email, password, registerDate],(err,results)=>{
+       console.log(req.body)
+       const SuSql = "INSERT INTO user (UserName, Email, PassWord, RegisterData) VALUES (?, ?, ?, NOW())";
+       const user = await xblog_db.query(SuSql, [username, Email, password],(err,results)=>{
          if(err){
             return console.log(err.message)
          }
@@ -67,25 +67,25 @@ exports.register = async (req, res) => {
 }
 
 
-//  exports.login = async (req,res)=>{
+ exports.login = async (req,res)=>{
 
-//    //jwt验证
-//    try{
-//       const {Email,password} = req.body  //存储请求中的信息、
+   //jwt验证
+   try{
+      const {Email,password} = req.body  //存储请求中的信息、
       
-//       const user = xblog_db.query("SELECT Email=? AND PassWord = ? FROM user",[Email,password],(err,result)=>{
-//          if(err){
-//             return console.log(err.message)
-//          }
-//          return result
-//       })
+      const user = xblog_db.query("SELECT Email=? AND PassWord = ? FROM user",[Email,password],(err,result)=>{
+         if(err){
+            return console.log(err.message)
+         }
+         return result
+      })
       
-//       //这里放数据库查找方法
-//       if(!user){
-//          return res.status(401).json({error:"用户名或者密码错误"})
-//       }
-//    } catch(error){
-//       res.status(500).json({error:"登录失败"});
-//    }
+      //这里放数据库查找方法
+      if(!user){
+         return res.status(401).json({error:"用户名或者密码错误"})
+      }
+   } catch(error){
+      res.status(500).json({error:"登录失败"});
+   }
 
-//  }
+ }
