@@ -1,5 +1,5 @@
 <script setup>
-import {onMounted} from "vue";
+import {onMounted,ref} from "vue";
 import NavLeft from "@/component/navLeft.vue";
 import {register,login} from "../../../Apis/Login/loginApi.js";
 import throttle from "../../../Debounce/throttle.js";
@@ -38,7 +38,20 @@ onMounted(()=>{
   //为提交按钮绑定请求接口，并添加节流函数
 
   let SignUpFormButton = document.getElementById("SignUpFormButton")
-  SignUpFormButton.addEventListener('click',throttle(sayHi,5000),true)
+ 
+
+
+  //测试部分当不得真
+   const fullName = ref(document.getElementById('SignUpName'));
+   const email = ref(document.getElementById('SignUpEmail'));
+   const password = ref(document.getElementById('SignUpPassword'));
+  function testInput(){
+   console.log("输入获取测试",fullName.value.value,email.value.value,password.value.value)
+  }
+  SignUpFormButton.addEventListener('click',function (){
+    register("/api/register",fullName.value.value,email.value.value,password.value.value)
+  },true)
+  SignUpFormButton.addEventListener('click',testInput,true)
 
 })
 
@@ -87,13 +100,13 @@ onMounted(()=>{
           <form class="forms_form">
             <fieldset class="forms_fieldset">
               <div class="forms_field">
-                <input type="text" placeholder="Full Name" class="forms_field-input" required />
+                <input id="SignUpName" type="text" placeholder="Full Name" class="forms_field-input" required />
               </div>
               <div class="forms_field">
-                <input type="email" placeholder="Email" class="forms_field-input" required />
+                <input id="SignUpEmail" type="email" placeholder="Email" class="forms_field-input" required />
               </div>
               <div class="forms_field">
-                <input type="password" placeholder="Password" class="forms_field-input" required />
+                <input id="SignUpPassword" type="password" placeholder="Password" class="forms_field-input" required />
               </div>
             </fieldset>
             <div class="forms_buttons">
