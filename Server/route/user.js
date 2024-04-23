@@ -10,7 +10,7 @@ const isLogin = user.isLogin
 router.post('/register',user.register)
 
 //用户登录
-router.post('/login', isLogin , user.login)
+router.post('/login', user.login)
 
 //将router抛出
 module.exports = router

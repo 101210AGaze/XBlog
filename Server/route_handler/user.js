@@ -44,20 +44,6 @@ exports.register = async (req, res) => {
            return res.status(401).json({ error: "注册错误" });
        }
 
-       const getIDSql = "SELECT UserID FROM user WHERE UserName=? AND PassWord=? AND Email=?";
-       const payload = await xblog_db.query(getIDSql, [username, password, Email],(err,results)=>{
-         if(err){
-            console.log(err.message)
-         }
-         return results
-       });
-
-       if (!payload) {
-           return res.status(401).json({ error: "获取ID时出错" });
-       }
-
-       const token = jwt.sign({ userID: payload.UserID }, jwtScretKey, { expiresIn: '1h' });
-       res.json({ token });
        console.log("注册成功")
    } catch (error) {
        console.log(error);
@@ -80,6 +66,22 @@ exports.register = async (req, res) => {
          return result
       })
       
+      //登录的时候发放令牌
+      const getIDSql = "SELECT UserID FROM user WHERE Email=? AND PassWord=?";
+      const payload = await xblog_db.query(getIDSql, [Email, password],(err,results)=>{
+        if(err){
+           console.log(err.message)
+        }
+        return results
+      });
+
+      if (!payload) {
+          return res.status(401).json({ error: "获取ID时出错" });
+      }
+
+      const token = jwt.sign({ userID: payload.UserID }, jwtScretKey, { expiresIn: '1h' });
+      res.json({ token });
+
       //这里放数据库查找方法
       if(!user){
          return res.status(401).json({error:"用户名或者密码错误"})

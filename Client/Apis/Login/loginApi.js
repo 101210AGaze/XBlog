@@ -9,6 +9,7 @@ export function login(url, Email, passWord){
     return new Promise((resolve,reject)=>{
         ajax("POST",url,data).then(response=>{
             console.log("response",response)
+            localStorage.setItem("token", response); // 将 token 存储在 localStorage 中
             resolve(response)
         }) .catch(err => {
             console.error('登录失败:', err); // 打印注册失败的错误信息
@@ -32,7 +33,6 @@ export function register(url, fullName, passWord, Email) {
     return new Promise((resolve, reject) => {
         ajax("POST", url, data)
             .then(response => {
-                localStorage.setItem("token", response); // 将 token 存储在 localStorage 中
                 console.log("注册成功");
                 resolve(response); // 注册成功，将响应数据传递给 resolve
             })
