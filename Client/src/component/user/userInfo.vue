@@ -1,49 +1,21 @@
 <script setup>
 
-document.addEventListener('DOMContentLoaded', () => {
-  function toggle() {
-    // Look for any element with the 'data-toggle' attribute
-    const elements = document.querySelectorAll('[data-toggle]');
+import Fish from "@/component/user/fish.vue";
+import NavLeft from "@/component/navLeft.vue";
 
-    elements.forEach((element) => {
-      element.addEventListener('click', (event) => {
-        event.preventDefault();
 
-        const targetID = element.getAttribute('data-toggle');
-        const targetElement = document.getElementById(targetID);
-
-        // Toggle the class 'toggled' on the targeted element
-        targetElement.classList.toggle('toggled');
-
-        // Toggle the class 'active' on the clicked element
-        element.classList.toggle('active');
-      });
-    });
-  }
-  toggle();
-});
 
 </script>
 
 <template>
-  <body id="top">
 
-  <header>
-    <h1>Backrooms UI</h1>
-
-    <nav>
-      <div class="nav-wrap">
-        <a href="#"><span>What?</span></a>
-        <a href="#"><span>Where?</span></a>
-        <a href="#"><span>Why?</span></a>
-        <a href="#"><span>How?</span></a>
-        <a href="#"><span>Help!</span></a>
-      </div>
-    </nav>
-  </header>
+  <div class="userInfo">
+    <nav-left></nav-left>
 
   <main>
-
+<!--    <header>-->
+<!--      <h1>欢迎回来！</h1>-->
+<!--    </header>-->
     <div class="column-wrap">
       <div class="box main-box" style="height: 300px;">
         <div class="box-inner">
@@ -66,31 +38,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     <div class="box main-box" style="width: 650px;">
       <div class="box-inner">
-
-        <div class="box frame">
-          <h3>"Have you seen them?"</h3>
-          <p>Tales from others who have wandered the digital backrooms. Share your stories, find clues, and remember - trust no one fully.</p>
-          <a class="button" href="#">Read</a>
-          <a class="button alt" href="#">Submit</a>
-        </div>
-
-        <div class="box-wrap">
-          <div class="hinge left"></div>
-          <div id="audio" class="box open-left">
-            <div class="screw right"></div>
-
-            <h3>Audio Logs</h3>
-            <p>Hear the whispers and cries from those who've delved too deep. They may offer advice, or they might lead you astray.</p>
-            <a class="button" href="#" data-toggle="audio">Listen</a>
-            <a class="button alt" href="#" data-toggle="audio">Record</a>
-          </div>
-        </div>
-
+        <fish id="fish"></fish>
       </div>
     </div>
 
   </main>
-  </body>
+  </div>
 </template>
 
 <style>
@@ -105,51 +58,25 @@ document.addEventListener('DOMContentLoaded', () => {
   --alt: #918d61;
 }
 
-* {
-  box-sizing: border-box;
-}
 
 ::selection {
   background: var(--body);
   color: var(--bg);
 }
 
-html {
-  overflow-x: hidden;
-}
-
-body {
-  margin: 0;
-  padding: 0 0 20px 0;
-  position: relative;
-  background: var(--bg);
-  color: var(--body);
-  width: 100%;
-  min-height: 100vh;
-  font-family: 'Sometype Mono', monospace;
-  background-image: url("https://assets.codepen.io/5896374/seamless-yellow-carpet.jpg");
-  overflow-x:hidden;
-  transition: all 0.3s steps(3);
-}
-
-body::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
+.userInfo {
+  background-image: url("public/background.jpg");
+  background-size: cover;
+  box-sizing: border-box;
+  display: grid;
   width: 100%;
   height: 100%;
-  background: black;
-  z-index: 999;
-  opacity: 0;
-  pointer-events: none;
-  transition: inherit;
+  font-size: 16px;
+  font-weight: normal;
+  grid-template-columns: 15% 85%;
+  grid-template-rows: 100%;
 }
 
-body.toggled::before {
-  opacity: 0.5;
-  mix-blend-mode: color-burn;
-}
 
 main {
   display: flex;
@@ -198,6 +125,10 @@ main {
 }
 
 .box-inner {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
   padding: 20px;
   background: var(--alt);
   border-radius: 3px;
@@ -585,5 +516,9 @@ h3 {
   height: 10px;
   background: var(--body);
   border-radius: 90% 90% 3px 3px;
+}
+
+#fish{
+   transform: scale(1.5);
 }
 </style>

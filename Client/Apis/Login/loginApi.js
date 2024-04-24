@@ -1,5 +1,5 @@
 import ajax from "../../Ajax/ajax.js";
-
+import router from "../../route/route.js";
 
 export function login(url, Email, passWord){
     const data = {
@@ -11,6 +11,7 @@ export function login(url, Email, passWord){
             console.log("response",response)
             localStorage.setItem("token", response); // 将 token 存储在 localStorage 中
             resolve(response)
+            router.push('/user')
         }) .catch(err => {
             console.error('登录失败:', err); // 打印注册失败的错误信息
             reject(err); // 注册失败，将错误信息传递给 reject
