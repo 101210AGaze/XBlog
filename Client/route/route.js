@@ -22,7 +22,7 @@ const routes =[
 
     {
         path:'/user',
-        component:()=>import('../src/component/user/userInfo.vue')
+        component:()=>import('../src/component/user/fish.vue')
     },
 
 

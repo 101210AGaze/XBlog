@@ -1,659 +1,589 @@
 <script setup>
-// clearing the console (just a CodePen thing)
 
-console.clear();
+document.addEventListener('DOMContentLoaded', () => {
+  function toggle() {
+    // Look for any element with the 'data-toggle' attribute
+    const elements = document.querySelectorAll('[data-toggle]');
 
-// there are 3 parts to this
-//
-// Scene:           Setups and manages threejs rendering
-// loadModel:       Loads the 3d obj file
-// setupAnimation:  Creates all the GSAP
-//                  animtions and scroll triggers
-//
-// first we call loadModel, once complete we call
-// setupAnimation which creates a new Scene
+    elements.forEach((element) => {
+      element.addEventListener('click', (event) => {
+        event.preventDefault();
 
-class Scene
-{
-  constructor(model)
-  {
-    this.views = [
-      { bottom: 0, height: 1 },
-      { bottom: 0, height: 0 }
-    ];
+        const targetID = element.getAttribute('data-toggle');
+        const targetElement = document.getElementById(targetID);
 
-    this.renderer = new THREE.WebGLRenderer({
-      antialias: true,
-      alpha: true
-    });
+        // Toggle the class 'toggled' on the targeted element
+        targetElement.classList.toggle('toggled');
 
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    this.renderer.setPixelRatio(window.devicePixelRatio);
-
-    document.body.appendChild( this.renderer.domElement );
-
-    // scene
-
-    this.scene = new THREE.Scene();
-
-    for ( var ii = 0; ii < this.views.length; ++ ii ) {
-
-      var view = this.views[ ii ];
-      var camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 2000 );
-      camera.position.fromArray([0, 0, 180] );
-      camera.layers.disableAll();
-      camera.layers.enable( ii );
-      view.camera = camera;
-      camera.lookAt(new THREE.Vector3(0, 5, 0));
-    }
-
-    //light
-
-    this.light = new THREE.PointLight( 0xffffff, 0.75 );
-    this.light.position.z = 150;
-    this.light.position.x = 70;
-    this.light.position.y = -20;
-    this.scene.add( this.light );
-
-    this.softLight = new THREE.AmbientLight( 0xffffff, 1.5 );
-    this.scene.add(this.softLight)
-
-    // group
-
-    this.onResize();
-    window.addEventListener( 'resize', this.onResize, false );
-
-    var edges = new THREE.EdgesGeometry( model.children[ 0 ].geometry );
-    let line = new THREE.LineSegments( edges );
-    line.material.depthTest = false;
-    line.material.opacity = 0.5;
-    line.material.transparent = true;
-    line.position.x = 0.5;
-    line.position.z = -1;
-    line.position.y = 0.2;
-
-    this.modelGroup = new THREE.Group();
-
-    model.layers.set( 0 );
-    line.layers.set( 1 );
-
-    this.modelGroup.add(model);
-    this.modelGroup.add(line);
-    this.scene.add(this.modelGroup);
-  }
-
-  render = () =>
-  {
-    for ( var ii = 0; ii < this.views.length; ++ ii ) {
-
-      var view = this.views[ ii ];
-      var camera = view.camera;
-
-      var bottom = Math.floor( this.h * view.bottom );
-      var height = Math.floor( this.h * view.height );
-
-      this.renderer.setViewport( 0, 0, this.w, this.h );
-      this.renderer.setScissor( 0, bottom, this.w, height );
-      this.renderer.setScissorTest( true );
-
-      camera.aspect = this.w / this.h;
-      this.renderer.render( this.scene, camera );
-    }
-  }
-
-  onResize = () =>
-  {
-    this.w = window.innerWidth;
-    this.h = window.innerHeight;
-
-    for ( var ii = 0; ii < this.views.length; ++ ii ) {
-      var view = this.views[ ii ];
-      var camera = view.camera;
-      camera.aspect = this.w / this.h;
-      let camZ = (screen.width - (this.w * 1)) / 3;
-      camera.position.z = camZ < 180 ? 180 : camZ;
-      camera.updateProjectionMatrix();
-    }
-
-    this.renderer.setSize( this.w, this.h );
-    this.render();
-  }
-}
-
-function loadModel()
-{
-  gsap.registerPlugin(ScrollTrigger);
-  gsap.registerPlugin(DrawSVGPlugin);
-  gsap.set('#line-length', {drawSVG: 0})
-  gsap.set('#line-wingspan', {drawSVG: 0})
-  gsap.set('#circle-phalange', {drawSVG: 0})
-
-  var object;
-
-  function onModelLoaded() {
-    object.traverse( function ( child ) {
-      let mat = new THREE.MeshPhongMaterial( { color: 0x171511, specular: 0xD0CBC7, shininess: 5, flatShading: true } );
-      child.material = mat;
-    });
-
-    setupAnimation(object);
-  }
-
-  var manager = new THREE.LoadingManager( onModelLoaded );
-  manager.onProgress = ( item, loaded, total ) => console.log( item, loaded, total );
-
-  var loader = new THREE.OBJLoader( manager );
-  loader.load( 'https://assets.codepen.io/557388/1405+Plane_1.obj', function ( obj ) { object = obj; });
-}
-
-function setupAnimation(model)
-{
-  let scene = new Scene(model);
-  let plane = scene.modelGroup;
-
-  gsap.fromTo('canvas',{x: "50%", autoAlpha: 0},  {duration: 1, x: "0%", autoAlpha: 1});
-  gsap.to('.loading', {autoAlpha: 0})
-  gsap.to('.scroll-cta', {opacity: 1})
-  gsap.set('svg', {autoAlpha: 1})
-
-  let tau = Math.PI * 2;
-
-  gsap.set(plane.rotation, {y: tau * -.25});
-  gsap.set(plane.position, {x: 80, y: -32, z: -60});
-
-  scene.render();
-
-  var sectionDuration = 1;
-  gsap.fromTo(scene.views[1],
-      { 	height: 1, bottom: 0 },
-      {
-        height: 0, bottom: 1,
-        ease: 'none',
-        scrollTrigger: {
-          trigger: ".blueprint",
-          scrub: true,
-          start: "bottom bottom",
-          end: "bottom top"
-        }
-      })
-
-  gsap.fromTo(scene.views[1],
-      { 	height: 0, bottom: 0 },
-      {
-        height: 1, bottom: 0,
-        ease: 'none',
-        scrollTrigger: {
-          trigger: ".blueprint",
-          scrub: true,
-          start: "top bottom",
-          end: "top top"
-        }
-      })
-
-  gsap.to('.ground', {
-    y: "30%",
-    scrollTrigger: {
-      trigger: ".ground-container",
-      scrub: true,
-      start: "top bottom",
-      end: "bottom top"
-    }
-  })
-
-  gsap.from('.clouds', {
-    y: "25%",
-    scrollTrigger: {
-      trigger: ".ground-container",
-      scrub: true,
-      start: "top bottom",
-      end: "bottom top"
-    }
-  })
-
-  gsap.to('#line-length', {
-    drawSVG: 100,
-    scrollTrigger: {
-      trigger: ".length",
-      scrub: true,
-      start: "top bottom",
-      end: "top top"
-    }
-  })
-
-  gsap.to('#line-wingspan', {
-    drawSVG: 100,
-    scrollTrigger: {
-      trigger: ".wingspan",
-      scrub: true,
-      start: "top 25%",
-      end: "bottom 50%"
-    }
-  })
-
-  gsap.to('#circle-phalange', {
-    drawSVG: 100,
-    scrollTrigger: {
-      trigger: ".phalange",
-      scrub: true,
-      start: "top 50%",
-      end: "bottom 100%"
-    }
-  })
-
-  gsap.to('#line-length', {
-    opacity: 0,
-    drawSVG: 0,
-    scrollTrigger: {
-      trigger: ".length",
-      scrub: true,
-      start: "top top",
-      end: "bottom top"
-    }
-  })
-
-  gsap.to('#line-wingspan', {
-    opacity: 0,
-    drawSVG: 0,
-    scrollTrigger: {
-      trigger: ".wingspan",
-      scrub: true,
-      start: "top top",
-      end: "bottom top"
-    }
-  })
-
-  gsap.to('#circle-phalange', {
-    opacity: 0,
-    drawSVG: 0,
-    scrollTrigger: {
-      trigger: ".phalange",
-      scrub: true,
-      start: "top top",
-      end: "bottom top"
-    }
-  })
-
-  let tl = new gsap.timeline(
-      {
-        onUpdate: scene.render,
-        scrollTrigger: {
-          trigger: ".content",
-          scrub: true,
-          start: "top top",
-          end: "bottom bottom"
-        },
-        defaults: {duration: sectionDuration, ease: 'power2.inOut'}
+        // Toggle the class 'active' on the clicked element
+        element.classList.toggle('active');
       });
+    });
+  }
+  toggle();
+});
 
-  let delay = 0;
-
-  tl.to('.scroll-cta', {duration: 0.25, opacity: 0}, delay)
-  tl.to(plane.position, {x: -10, ease: 'power1.in'}, delay)
-
-  delay += sectionDuration;
-
-  tl.to(plane.rotation, {x: tau * .25, y: 0, z: -tau * 0.05, ease: 'power1.inOut'}, delay)
-  tl.to(plane.position, {x: -40, y: 0, z: -60, ease: 'power1.inOut'}, delay)
-
-  delay += sectionDuration;
-
-  tl.to(plane.rotation, {x: tau * .25, y: 0,  z: tau * 0.05, ease: 'power3.inOut'}, delay)
-  tl.to(plane.position, {x: 40, y: 0, z: -60, ease: 'power2.inOut'}, delay)
-
-  delay += sectionDuration;
-
-  tl.to(plane.rotation, {x: tau * .2, y: 0, z: -tau * 0.1, ease: 'power3.inOut'}, delay)
-  tl.to(plane.position, {x: -40, y: 0, z: -30, ease: 'power2.inOut'}, delay)
-
-  delay += sectionDuration;
-
-  tl.to(plane.rotation, { x: 0, z: 0, y: tau * .25}, delay)
-  tl.to(plane.position, { x: 0, y: -10, z: 50}, delay)
-
-  delay += sectionDuration;
-  delay += sectionDuration;
-
-  tl.to(plane.rotation, {x: tau * 0.25, y: tau *.5, z: 0, ease:'power4.inOut'}, delay)
-  tl.to(plane.position, {z: 30, ease:'power4.inOut'}, delay)
-
-  delay += sectionDuration;
-
-  tl.to(plane.rotation, {x: tau * 0.25, y: tau *.5, z: 0, ease:'power4.inOut'}, delay)
-  tl.to(plane.position, {z: 60, x: 30, ease:'power4.inOut'}, delay)
-
-  delay += sectionDuration;
-
-  tl.to(plane.rotation, {x: tau * 0.35, y: tau *.75, z: tau * 0.6, ease:'power4.inOut'}, delay)
-  tl.to(plane.position, {z: 100, x: 20, y: 0, ease:'power4.inOut'}, delay)
-
-  delay += sectionDuration;
-
-  tl.to(plane.rotation, {x: tau * 0.15, y: tau *.85, z: -tau * 0, ease: 'power1.in'}, delay)
-  tl.to(plane.position, {z: -150, x: 0, y: 0, ease: 'power1.inOut'}, delay)
-
-  delay += sectionDuration;
-
-  tl.to(plane.rotation, {duration: sectionDuration, x: -tau * 0.05, y: tau, z: -tau * 0.1, ease: 'none'}, delay)
-  tl.to(plane.position, {duration: sectionDuration, x: 0, y: 30, z: 320, ease: 'power1.in'}, delay)
-
-  tl.to(scene.light.position, {duration: sectionDuration, x: 0, y: 0, z: 0}, delay)
-}
-
-loadModel();
 </script>
 
 <template>
-  <div class="content">
-    <div class="loading">Loading</div>
-    <div class="trigger"></div>
-    <div class="section">
+  <body id="top">
 
-      <h1>Airplanes.</h1>
-      <h3>The beginners guide.</h3>
-      <p>You've probably forgotten what these are.</p>
-      <!-- 		<div class="phonetic">/ ˈɛərˌpleɪn /</div> -->
-      <div class="scroll-cta">Scroll</div>
+  <header>
+    <h1>Backrooms UI</h1>
+
+    <nav>
+      <div class="nav-wrap">
+        <a href="#"><span>What?</span></a>
+        <a href="#"><span>Where?</span></a>
+        <a href="#"><span>Why?</span></a>
+        <a href="#"><span>How?</span></a>
+        <a href="#"><span>Help!</span></a>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+
+    <div class="column-wrap">
+      <div class="box main-box" style="height: 300px;">
+        <div class="box-inner">
+          <div class="box toggler frame">
+            <div class="screw"></div>
+            <div class="toggler-inner" data-toggle="top"></div>
+          </div>
+        </div>
+      </div>
+      <div class="box main-box" style="height: 300px;">
+        <div class="box-inner">
+          <div class="box toggler frame">
+            <div class="screw"></div>
+            <div class="outlet"></div>
+            <div class="outlet"></div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="section right">
-      <h2>They're kinda like buses...</h2>
+    <div class="box main-box" style="width: 650px;">
+      <div class="box-inner">
+
+        <div class="box frame">
+          <h3>"Have you seen them?"</h3>
+          <p>Tales from others who have wandered the digital backrooms. Share your stories, find clues, and remember - trust no one fully.</p>
+          <a class="button" href="#">Read</a>
+          <a class="button alt" href="#">Submit</a>
+        </div>
+
+        <div class="box-wrap">
+          <div class="hinge left"></div>
+          <div id="audio" class="box open-left">
+            <div class="screw right"></div>
+
+            <h3>Audio Logs</h3>
+            <p>Hear the whispers and cries from those who've delved too deep. They may offer advice, or they might lead you astray.</p>
+            <a class="button" href="#" data-toggle="audio">Listen</a>
+            <a class="button alt" href="#" data-toggle="audio">Record</a>
+          </div>
+        </div>
+
+      </div>
     </div>
 
-    <div class="ground-container">
-      <div class="parallax ground"></div>
-      <div class="section right">
-        <h2>..except they leave the ground.</h2>
-        <p>Saaay what!?.</p>
-      </div>
-
-      <div class="section">
-        <h2>They fly through the sky.</h2>
-        <p>For realsies!</p>
-      </div>
-
-      <div class="section right">
-        <h2>Defying all known physical laws.</h2>
-        <p>It's actual magic!</p>
-      </div>
-      <div class="parallax clouds"></div>
-    </div>
-
-    <div class="blueprint">
-      <svg width="100%" height="100%" viewbox="0 0 100 100">
-        <line id="line-length" x1="10" y1="80" x2="90" y2="80" stroke-width="0.5"></line>
-        <path id="line-wingspan" d="M10 50, L40 35, M60 35 L90 50" stroke-width="0.5"></path>
-        <circle id="circle-phalange" cx="60" cy="60" r="15" fill="transparent" stroke-width="0.5"></circle>
-      </svg>
-      <div class="section dark ">
-        <h2>The facts and figures.</h2>
-        <p>Lets get into the nitty gritty...</p>
-      </div>
-      <div class="section dark length">
-        <h2>Length.</h2>
-        <p>Long.</p>
-      </div>
-      <div class="section dark wingspan">
-        <h2>Wing Span.</h2>
-        <p>I dunno, longer than a cat probably.</p>
-      </div>
-      <div class="section dark phalange">
-        <h2>Left Phalange</h2>
-        <p>Missing</p>
-      </div>
-      <div class="section dark">
-        <h2>Engines</h2>
-        <p>Turbine funtime</p>
-      </div>
-      <!-- 		<div class="section"></div> -->
-    </div>
-    <div class="sunset">
-      <div class="section"></div>
-      <div class="section end">
-        <h2>Fin.</h2>
-        <ul class="credits">
-          <li>Plane model by <a href="https://poly.google.com/view/8ciDd9k8wha" target="_blank">Google</a></li>
-          <li>Animated using <a href="https://greensock.com/scrolltrigger/" target="_blank">GSAP ScrollTrigger</a></li>
-        </ul>
-      </div>
-    </div>
-  </div>
+  </main>
+  </body>
 </template>
 
-<style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap');
-svg
-{
-  z-index: 100;
-}
-:root
-{
-  --padding: 10vmin;
-  --color-background: #D0CBC7;
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Sometype+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 
-  --font-size-large: 8vw;
-  --font-size-medium: 4vw;
-  --font-size-normal: 2vw;
-
-  @media only screen and (min-width: 800px) {
-    --font-size-large: 64px;
-    --font-size-medium: 32px;
-    --font-size-normal: 16px;
-  }
-
-  @media only screen and (max-width: 500px) {
-    --font-size-large: 40px;
-    --font-size-medium: 20px;
-    --font-size-normal: 14px;
-  }
+:root {
+  --bg: #fef5b9;
+  --box: #fced97;
+  --light: #fffbaf;
+  --dark: #825a48;
+  --body: #251418;
+  --alt: #918d61;
 }
 
-a
-{
-  color: white;
+* {
+  box-sizing: border-box;
 }
 
-ul
-{
-  margin: 0;
-  padding: 0;
-  list-style: none;
+::selection {
+  background: var(--body);
+  color: var(--bg);
 }
 
-li
-{
-  margin-top: 10px;
-}
-
-html, body
-{
-  margin: 0;
-
-  min-height: 100%;
-  min-width: 100%;
-  font-family: 'Libre Baskerville', serif;
-  background-color: var(--color-background);
-  font-weight: 400;
-  font-size: var(--font-size-normal);
+html {
   overflow-x: hidden;
 }
 
-canvas
-{
-  position: fixed;
-  z-index: 10;
+body {
+  margin: 0;
+  padding: 0 0 20px 0;
+  position: relative;
+  background: var(--bg);
+  color: var(--body);
+  width: 100%;
+  min-height: 100vh;
+  font-family: 'Sometype Mono', monospace;
+  background-image: url("https://assets.codepen.io/5896374/seamless-yellow-carpet.jpg");
+  overflow-x:hidden;
+  transition: all 0.3s steps(3);
+}
+
+body::before {
+  content: "";
+  position: absolute;
   top: 0;
   left: 0;
-  z-index: 2;
-  pointer-events: none;
-
-  visibility: hidden;
+  width: 100%;
+  height: 100%;
+  background: black;
+  z-index: 999;
   opacity: 0;
+  pointer-events: none;
+  transition: inherit;
 }
 
-
-.solid
-{
-  clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%);
+body.toggled::before {
+  opacity: 0.5;
+  mix-blend-mode: color-burn;
 }
 
-.wireframe
-{
-  clip-path: polygon(0% 100%, 100% 100%, 100% 100%, 0% 100%);
+main {
+  display: flex;
+  flex-wrap: wrap;
+  width: 1050px;
+  margin: auto;
+  max-width: 100%;
 }
 
-.content
-{
+.box {
+  margin: auto;
+  max-width: 100%;
+  display: grid;
+  padding: 20px;
   position: relative;
+  border-radius: 10px;
+  border: 2px solid;
+  background: var(--box);
+  box-shadow: 5px 5px 3px inset rgba(255, 255, 255, 0.65),
+  5px 10px 10px 5px inset var(--light), -6px -6px 1px inset var(--dark),
+  3px 3px 0 rgba(0, 0, 0, 0.1), 5px 5px 0 rgba(0, 0, 0, 0.1),
+  7px 7px 0 rgba(0, 0, 0, 0.1), 9px 9px 0 rgba(0, 0, 0, 0.1);
+}
+
+.box-wrap {
+  position: relative;
+}
+
+.main-box {
+  width: 300px;
+  min-height: 300px;
+  max-width: 92%;
+  margin: 20px auto;
+}
+
+.box::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
   z-index: 1;
+  border-radius: inherit;
+  pointer-events: none;
+}
 
+.box-inner {
+  padding: 20px;
+  background: var(--alt);
+  border-radius: 3px;
+  border: 2px solid;
+  box-shadow: 2px 2px 5px inset rgba(0, 0, 0, 0.5), -3px -3px 5px rgba(0,0,0,0.25), 4px 4px 5px rgba(255,255,255,0.75);
+  position: relative;
+  z-index: 3;
+  max-width: 100%;
+}
 
-  .trigger
-  {
-    position: absolute;
-    top: 0;
-    height: 100%;
-  }
+.box-inner::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+      45deg,
+      var(--alt) 25%,
+      transparent 25%,
+      transparent 75%,
+      var(--alt) 75%,
+      var(--alt) 0
+  ),
+  linear-gradient(
+      45deg,
+      var(--alt) 25%,
+      transparent 25%,
+      transparent 75%,
+      var(--alt) 75%,
+      var(--alt) 0
+  ),
+  rgba(0, 0, 0, 0);
+  background-size: 10px 10px, 10px 10px;
+  background-position: 0px 0, 5px 5px;
+  filter: brightness(0.8);
+  opacity: 0.25;
+  mix-blend-mode: multiply;
+}
 
-  .section
-  {
-    position: relative;
-    padding: var(--padding);
-    --pad2: calc(var(--padding) * 2);
-    width: calc(100vw - var(--pad2));
-    height: calc(100vh - var(--pad2));
-    margin: 0 auto;
-    z-index: 2;
+.box.toggler {
+  height: 100%;
+  width: 150px;
+  align-content: center;
+}
 
-    &.dark
-    {
-      color: white;
-      background-color: black;
-    }
+.box.frame::before {
+  content: "";
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: calc(100% - 22px);
+  height: calc(100% - 22px);
+  border: 2px solid;
+  border-radius: 5px;
+  pointer-events: none;
+}
 
-    &.right
-    {
-      text-align: right;
-    }
+.box-inner .box:not(.toggler) {
+  margin-bottom: 20px;
+  display: block;
+}
 
+.box-inner .box:last-of-type {
+  margin-bottom: 0;
+}
 
-  }
+.toggler-inner {
+  width: 55px;
+  height: 110px;
+  border: 2px solid;
+  border-radius: 3px;
+  margin: auto;
+  background-image: linear-gradient(to bottom, var(--box) 0%, var(--box) 20%, var(--bg) 30%,var(--light) 60%, var(--dark) 95%);
+  box-shadow: 0 0 3px 3px inset var(--bg),3px 3px 0 rgba(0, 0, 0, 0.1), 5px 5px 0 rgba(0, 0, 0, 0.1),
+  7px 7px 0 rgba(0, 0, 0, 0.1);
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s steps(2);
+  transform: perspective(400px);
+  transform-style: preserve-3d;
+}
 
-  .blueprint
-  {
-    position: relative;
-    background-color:#131C2A;
-    background-image: linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px),
-    linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px);
-    background-size:100px 100px, 100px 100px, 20px 20px, 20px 20px;
-    background-position:-2px -2px, -2px -2px, -1px -1px, -1px -1px;
-    background-attachment: fixed;
+.toggler-inner::before {
+  content: "";
+  background: inherit;
+  transform-style: preserve-3d;
+  transform: perspective(500px) rotateX(35deg);
+  position: absolute;
+  top: calc(-12% - 2px);
+  left: -2px;
+  width: 100%;
+  height: 112%;
+  transition: inherit;
+  border: 2px solid;
+  border-radius: inherit;
+  box-shadow: inherit;
+  transition: inherit;
+}
 
-    svg
-    {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      stroke: white;
-      pointer-events: none;
-      visibility: hidden;
-    }
+.toggler-inner::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: -5%;
+  height: 70%;
+  width: calc(110% + 5px);
+  border-radius: inherit;
+  background: black;
+  opacity: 0.3;
+  filter: blur(2px);
+  transform: skewx(20deg) translatex(25%);
+  pointer-events: none;
+  transition: inherit;
+}
 
-    .dark
-    {
-      background-color: transparent;
-    }
-  }
+.toggler-inner.active::before {
+  transform: perspective(500px) rotateX(-35deg);
+  top: -3%;
+}
 
-  .ground-container
-  {
-    position: relative;
-    overflow: hidden;
+.toggler-inner.active::after {
+  height: 20%;
+  transform: skewx(20deg) translatex(10%);
+  width: 110%;
+}
 
+nav {
+  width: 100%;
+  border-top: 2px solid;
+  margin-bottom: 20px;
+  border-bottom: 2px solid;
+  text-align: center;
+  background: var(--light);
+  position: sticky;
+  top: 0;
+  z-index: 9;
+}
 
-    .parallax
-    {
-      position:absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: -100px;
-      background-repeat: no-repeat;
-      background-position: top center;
-      background-size: cover;
-      transform-origin: top center;
-    }
+nav::before {
+  content: "";
+  box-shadow: 5px 5px 3px inset rgba(255, 255, 255, 0.65),
+  5px 10px 10px 5px inset var(--light), -6px -6px 1px inset var(--dark),
+  3px 3px 0 rgba(0, 0, 0, 0.1), 5px 5px 0 rgba(0, 0, 0, 0.1),
+  7px 7px 0 rgba(0, 0, 0, 0.1), 9px 9px 0 rgba(0, 0, 0, 0.1);
+  position: absolute;
+  top: 0;
+  left: -20px;
+  width: calc(100% + 40px);
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
+}
 
-    .ground
-    {
-      z-index: -1;
-      background-image: url("https://assets.codepen.io/557388/background-reduced.jpg");
-    }
+.nav-wrap {
+  display: flex;
+  width: calc(100% - 20px);
+  max-width: 1000px;
+  margin: 0 auto;
+}
 
-    .clouds
-    {
-      z-index: 2;
-      background-image: url("https://assets.codepen.io/557388/clouds.png");
-    }
-  }
+nav a {
+  padding: 10px;
+  flex-grow: 1;
+  color: inherit;
+  text-transform: uppercase;
+  font-weight: bold;
+  text-decoration: none;
+  border-right: 2px solid;
+  transition: all 0.15s steps(2);
+}
 
+nav a:first-of-type {
+  border-left: 2px solid;
+}
 
-  .scroll-cta, .credits
-  {
-    position: absolute;
-    bottom: var(--padding);
-  }
+nav a:focus,
+nav a:hover {
+  background: var(--light);
+  box-shadow: -2px -2px 2px 2px inset rgba(255, 255, 255, 0.5),
+  2px 2px 1px 2px inset var(--dark);
+}
 
-  .scroll-cta
-  {
-    font-size: var(--font-size-medium);
-    opacity: 0;
-  }
+nav a:focus {
+  filter: brightness(0.9);
+}
 
-  .sunset
-  {
-    background: url("https://assets.codepen.io/557388/sunset-reduced.jpg") no-repeat top center;
-    background-size: cover;
-    transform-origin: top center;
-  }
+nav a span {
+  display: inline-block;
+  transition: inherit;
+}
 
-  h1, h2
-  {
-    font-size: var(--font-size-large);
-    margin: 0vmin 0 2vmin 0 ;
-    font-weight: 700;
-    display: inline;
-  }
+nav a:focus span,
+nav a:hover span {
+  transform: translatey(3px);
+}
 
-  h3
-  {
-    font-size: var(--font-size-medium);
-    font-weight: 400;
-    margin: 0;
-  }
+h1 {
+  width: 100%;
+  text-align: center;
+  text-transform: uppercase;
+  margin: 0;
+  padding: 20px;
+}
 
-  .end h2
-  {
-    margin-bottom: 50vh;
-  }
+h2, h3, h4 {
+  margin: 0.5em 0;
+}
 
-  .loading
-  {
-    position: fixed;
-    width: 100vw;
-    height: 100vh;
-    top: 0;
-    left: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: var(--font-size-medium);
-  }
+h3 {
+  border-bottom: 2px solid;
+  padding-bottom: 0.5em;
+}
 
+.button {
+  background: var(--body);
+  max-width: max-content;
+  display: inline-block;
+  font-weight: bold;
+  border: 1px solid transparent;
+  color: var(--light);
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.5em 1em;
+  border-radius: 3px;
+  box-shadow: 0.2em 0.2em 0.2em 0.1em inset var(--dark), 0.2em 0.2em 0.2em rgba(0,0,0,0.25);
+  transition: all 0.2s steps(2);
+}
+
+.button:hover {
+  color: var(--bg);
+  background: var(--dark);
+  box-shadow: -0.2em -0.2em 0.2em 0.1em inset var(--body), 0.2em 0.2em 0.2em rgba(0,0,0,0.25);
+}
+
+.button:focus {
+  background: var(--dark);
+  box-shadow: 0.2em 0.2em 0.2em 0.1em inset var(--body);
+}
+
+.button.alt {
+  background: var(--bg);
+  color: var(--body);
+  box-shadow: 0em 0em 0em 0.1em inset rgba(0,0,0,0), 0.2em 0.2em 0.2em rgba(0,0,0,0.25);
+  border-color: currentcolor;
+}
+
+.button.alt:hover {
+  background: var(--light);
+}
+
+.button.alt:focus {
+  box-shadow: 0.2em 0.2em 0.2em 0.1em inset rgba(0,0,0,0.25);
+}
+
+.screw {
+  position: absolute;
+  height: 100%;
+  top: 0;
+  width: 18px;
+  left: calc(50% - 9px);
+}
+
+.screw::after,
+.screw::before {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border: 2px solid;
+  border-radius: 100%;
+  background: linear-gradient(160deg, #d4d4d4 0%, #825a48 35%, #825a48 40%, #251418 40%, #251418 60%, #825a48 60%, #825a48 65%, #d4d4d4 100%);
+  box-shadow: 3px 3px 3px rgba(0,0,0,0.3), 3px 3px 3px inset rgba(255,200,200,0.25), -3px -3px 3px inset rgba(0,0,0,0.25);
+}
+
+.screw::before {
+  content: "";
+  top: 18px;
+}
+
+.screw::after {
+  content: "";
+  bottom: 18px;
+  transform: rotate(85deg);
+  box-shadow: 3px -3px 3px rgba(0,0,0,0.3), 3px -3px 3px inset rgba(255,200,200,0.25), -3px 3px 3px inset rgba(0,0,0,0.25);
+}
+
+.screw.right {
+  left: unset;
+  right: 20px;
+}
+.screw.left {
+  left: 20px;
+}
+
+.hinge {
+  position: absolute;
+  top: 20px;
+  width: 16px;
+  height: calc(100% - 40px);
+  border-radius: 3px;
+  border: 2px solid;
+  background: linear-gradient(0deg, #a28b81 0%, #825a48 40%, #825a48 45%, #251418 45%, #251418 55%, #825a48 55%, #825a48 60%, #a28b81 100%);
+  background-size: 30px 30px;
+  box-shadow: 3px 3px 3px rgba(0,0,0,0.3), 3px 3px 3px inset rgba(255,200,200,0.25), -3px -3px 3px inset rgba(0,0,0,0.25);
+}
+
+.hinge.left {
+  left: -8px;
+  box-shadow: -3px 3px 3px rgba(0,0,0,0.3), 3px 3px 3px inset rgba(255,200,200,0.25), -3px -3px 3px inset rgba(0,0,0,0.25);
+}
+
+.hinge.right {
+  right: -8px;
+}
+
+.open-left {
+  position: relative;
+  transform: perspective(1000px) rotateY(0deg);
+  transform-origin: left center;
+  transition: transform 1s steps(10);
+}
+
+.open-left.toggled {
+  transform: perspective(1000px) rotateY(-92deg);
+}
+
+.open-left.toggled a::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  max-width: unset;
+  background: black;
+  opacity: 0.05;
+}
+
+.open-left .screw {
+  transform: scalex(100%) translatex(0%);
+  transition: transform 0.5s steps(5);
+}
+
+.open-left.toggled .screw {
+  transform: scalex(500%) translatex(-70%);
+  transition-delay: 0.5s;
+}
+
+.column-wrap {
+  margin: 0 auto;
+  max-width: max-content;
+}
+
+.outlet {
+  border: 2px solid;
+  width: 60px;
+  height: 50px;
+  margin: 5px auto;
+  background: var(--light);
+  border-radius: 40% 40% 50% 50%;
+  box-shadow: 3px 3px 3px rgba(0,0,0,0.25), 3px 3px 3px inset rgba(0,0,0,0.15), -3px -3px 3px inset rgba(255,255,255,0.5);
+  position: relative;
+}
+
+.outlet::before {
+  content: "";
+  position: absolute;
+  top: 10px;
+  left: 15px;
+  background: var(--body);
+  width: 6px;
+  height: 16px;
+  border-radius: 3px;
+  box-shadow: 19px 0;
+}
+
+.outlet::after {
+  content: "";
+  position: absolute;
+  left: 22.5px;
+  bottom: 7px;
+  width: 10px;
+  height: 10px;
+  background: var(--body);
+  border-radius: 90% 90% 3px 3px;
 }
 </style>

@@ -15,6 +15,9 @@
     <router-link to="/login">
     <a href="#" class="blog-menu">Contact</a>
     </router-link>
+    <router-link to="/login">
+      <a href="#" class="blog-menu">userTest</a>
+    </router-link>
     <a class="blog-menu subscribe">@XinLin</a>
   </div>
 </template>
